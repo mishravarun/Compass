@@ -31,7 +31,9 @@ public class CompassActivity extends Activity
     private ImageView mPointerImage;
     private Sensor mSensor;
     private SensorManager mSensorManager;
-
+    float[] mGravity;
+    float[] mGeomagnetic;
+    float azimut;
     public CompassActivity()
     {
 
@@ -72,12 +74,13 @@ public class CompassActivity extends Activity
             if (sensorevent != null)
             {
                 f = sensorevent.values[0];
-                mOrientationText.setText((new StringBuilder("Bearing: ")).append(f).append(" degrees").toString());
+                mOrientationText.setText((new StringBuilder("Bearing: ")).append(f).append(" degrees also -   " ).append(azimut).toString());
             } else
             {
                 mOrientationText.setText(R.string.no_data);
                 f = 0.0F;
             }
+
             i = mPointerImage.getWidth();
             j = mPointerImage.getHeight();
             bitmap = prepareImage(i, j);
@@ -140,6 +143,9 @@ public class CompassActivity extends Activity
         {
             mSensor = mSensorManager.getDefaultSensor(3);
             mSensorManager.registerListener(this, mSensor, 1);
+            mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 1);
+            mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), 1);
+
         }
     }
 
@@ -162,9 +168,26 @@ public class CompassActivity extends Activity
         updateContents();
     }
 
-    public final void onSensorChanged(SensorEvent sensorevent)
+    public final void onSensorChanged(SensorEvent event)
     {
-        mLatestSensorEvent = sensorevent;
+        if (event.sensor.getType() ==Sensor.TYPE_ORIENTATION )
+            mLatestSensorEvent = event;
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = event.values;
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = event.values;
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity,
+                    mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+
+                azimut = (float)((Math.toDegrees(orientation[0])+360)%360);
+            }
+        }
         updateContents();
     }
 

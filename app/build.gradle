@@ -5,7 +5,7 @@ android {
     buildToolsVersion "20.0.0"
 
     defaultConfig {
-        applicationId "com.nextw3.simplestcompass"
+        applicationId "com.varunmishra.comapss"
         minSdkVersion 7
         targetSdkVersion 7
     }
